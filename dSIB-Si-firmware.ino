@@ -4,18 +4,22 @@ int led = PB9;
 int button = PB8;
 int tx = PB6;
 int rx = PB7;
+int pin_int = PB5;
 
-int brake1 = PA7_ALT1;
-int brake2 = PA8;
-int brake3 = PA9;
-int brake4 = PA10;
-int brake5 = PA11;
+int tx2 = PB3;
+int rx2 = PA15;
+
+int brake1 = PB14_ALT1;
+int brake2 = PB15_ALT2;
+int brake3 = PA8;
+int brake4 = PA9;
+int brake5 = PA10;
 
 int sense1 = PA1;
-int sense2 = PA2;
-int sense3 = PA3;
-int sense4 = PA4;
-int sense5 = PA5;
+int sense2 = PA5;
+int sense3 = PA4;
+int sense4 = PA3;
+int sense5 = PA2;
 int sense_mv = PA0;
 
 uint32_t last_release = 0;
@@ -28,10 +32,15 @@ int LOW_POWER = 35 * 255 / 48;
 int HIGH_POWER_Z = 45 * 255 / 48;
 int LOW_POWER_Z = 40 * 255 / 48;
 
+HardwareSerial serial_arm(rx2, tx2);
+
+
 void setup() {
+    Serial.begin(9600);
+    serial_arm.begin(115200);
     pinMode(led, OUTPUT);
     pinMode(rx, INPUT_PULLUP);
-    pinMode(button, INPUT_PULLUP);
+    pinMode(button, INPUT);
 
     pinMode(brake1, OUTPUT);
     pinMode(brake2, OUTPUT);
@@ -49,7 +58,10 @@ void setup() {
 
 void loop () {
     uint32_t t = millis();
-    if (digitalRead(rx) == 0 || digitalRead(button) == 0) {
+    while (serial_arm.available()) {
+      Serial.write(serial_arm.read());
+    }
+    if (digitalRead(rx) == 0 || digitalRead(button) == 1) {
         if (!is_released) {
             last_release = t;
             is_released = 1;
@@ -66,7 +78,7 @@ void loop () {
             analogWrite(brake3, HIGH_POWER);
             analogWrite(brake4, HIGH_POWER);
             analogWrite(brake5, HIGH_POWER);  
-            digitalWrite(led, 255);
+            digitalWrite(led, 1);
 
         } else {
             analogWrite(brake1, LOW_POWER_Z);
@@ -74,7 +86,7 @@ void loop () {
             analogWrite(brake3, LOW_POWER);
             analogWrite(brake4, LOW_POWER);
             analogWrite(brake5, LOW_POWER);     
-            analogWrite(led, (millis() % 100) > 50 ? 40 : 0);
+            digitalWrite(led, (millis() % 100) > 50 ? 1 : 0);
 
         }
     } else {
@@ -83,47 +95,7 @@ void loop () {
         analogWrite(brake3, 0);
         analogWrite(brake4, 0);
         analogWrite(brake5, 0);
-        analogWrite(led, 40);
+        digitalWrite(led, 1);
 
     }
-}
-
-extern "C" void SystemClock_Config(void)
-{
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
-
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL12;
-  RCC_OscInitStruct.PLL.PREDIV = RCC_PREDIV_DIV1;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1;
-  PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-  {
-    Error_Handler();
-  }
 }
