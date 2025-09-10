@@ -1,10 +1,25 @@
 # dSIB-Si firmware
 
-The brake release parameters are **guessed** and only tested on one system.
+## Prerequisites
 
-Compliation and programming: 
+Compile:
+- `arduino-cli` https://arduino.github.io/arduino-cli/1.2/
+- `make`
 
-1. Install Arduino IDE
-2. In Boards Manager, install `STM32 MCU based boards`
-3. In Boards, select `Generic STM32F0 series` and `Generic F030c8Tx`
-4. Use ST Link to program the board
+Upload:
+- `dfu-util`
+
+
+## Compile
+
+```
+make build
+```
+
+## Upload
+
+Hold down `DFU` button when you connect USB, then release `DFU` button.
+
+```
+make dfu
+```
